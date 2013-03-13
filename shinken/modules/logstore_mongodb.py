@@ -177,7 +177,7 @@ class LiveStatusLogStoreMongoDB(BaseModule):
             today0000 = datetime.datetime(today.year, today.month, today.day, 0, 0, 0)
             today0005 = datetime.datetime(today.year, today.month, today.day, 0, 5, 0)
             oldest = today0000 - datetime.timedelta(days=self.max_logs_age)
-            self.db[self.collection].remove({u'time': {'$lt': time.mktime(oldest.timetuple())}}, safe=True)
+            self.db[self.collection].remove({u'time': {'$lt': time.mktime(oldest.timetuple())}})
 
             if now < time.mktime(today0005.timetuple()):
                 nextrotation = today0005
@@ -200,7 +200,7 @@ class LiveStatusLogStoreMongoDB(BaseModule):
         values = logline.as_dict()
         if logline.logclass != LOGCLASS_INVALID:
             try:
-                self.db[self.collection].insert(values, safe=True)
+                self.db[self.collection].insert(values)
                 self.is_connected = CONNECTED
                 # If we have a backlog from an outage, we flush these lines
                 # First we make a copy, so we can delete elements from
@@ -208,7 +208,7 @@ class LiveStatusLogStoreMongoDB(BaseModule):
                 backloglines = [bl for bl in self.backlog]
                 for backlogline in backloglines:
                     try:
-                        self.db[self.collection].insert(backlogline, safe=True)
+                        self.db[self.collection].insert(backlogline)
                         self.backlog.remove(backlogline)
                     except AutoReconnect, exp:
                         self.is_connected = SWITCHING
@@ -269,7 +269,7 @@ class LiveStatusLogStoreMongoDB(BaseModule):
             # Be conservative, get everything from the database between
             # two dates and apply the Filter:-clauses in python
             mongo_filter_func = self.mongo_time_filter_stack.get_stack()
-        result = []
+        dbresult = []
         mongo_filter = mongo_filter_func()
         logger.debug("[Logstore MongoDB] Mongo filter is %s" % str(mongo_filter))
         # We can apply the filterstack here as well. we have columns and filtercolumns.
